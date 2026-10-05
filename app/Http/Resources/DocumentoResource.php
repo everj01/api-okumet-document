@@ -19,6 +19,7 @@ class DocumentoResource extends JsonResource
             'resumen' => $this->resumen,
             'expediente' => $this->whenLoaded('expediente', fn () => [
                 'id' => $this->expediente->id,
+                'uuid' => $this->expediente->uuid,
                 'codigo' => $this->expediente->codigo,
                 'titulo' => $this->expediente->titulo,
             ]),

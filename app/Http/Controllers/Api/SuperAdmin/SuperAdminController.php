@@ -29,6 +29,7 @@ class SuperAdminController extends Controller
                     ->orWhere('razon_social', 'like', "%{$buscar}%")
                     ->orWhere('ruc', 'like', "%{$buscar}%");
             }))
+            ->tap(fn (Builder $q) => $this->filtrarFechas($q, $request, 'created_at'))
             ->tap(fn (Builder $q) => $this->ordenar($q, $request, ['nombre_comercial', 'created_at'], 'nombre_comercial'))
             ->paginate($request->integer('por_pagina', 15))
             ->withQueryString();
@@ -44,6 +45,7 @@ class SuperAdminController extends Controller
                 $q->where(fn (Builder $sub) => $sub->where('name', 'like', "%{$buscar}%")->orWhere('email', 'like', "%{$buscar}%"));
             })
             ->when($request->filled('tenant_id'), fn (Builder $q) => $q->where('tenant_id', $request->integer('tenant_id')))
+            ->tap(fn (Builder $q) => $this->filtrarFechas($q, $request, 'created_at'))
             ->tap(fn (Builder $q) => $this->ordenar($q, $request, ['name', 'email', 'created_at'], 'name'))
             ->paginate($request->integer('por_pagina', 15))
             ->withQueryString();
@@ -56,6 +58,7 @@ class SuperAdminController extends Controller
         $clientes = Cliente::with('tenant')
             ->buscar($request->input('buscar'))
             ->when($request->filled('tenant_id'), fn (Builder $q) => $q->where('tenant_id', $request->integer('tenant_id')))
+            ->tap(fn (Builder $q) => $this->filtrarFechas($q, $request, 'created_at'))
             ->tap(fn (Builder $q) => $this->ordenar($q, $request, ['nombre', 'created_at'], 'nombre'))
             ->paginate($request->integer('por_pagina', 15))
             ->withQueryString();
@@ -68,6 +71,7 @@ class SuperAdminController extends Controller
         $expedientes = Expediente::with(['tenant', 'cliente', 'abogado'])
             ->buscar($request->input('buscar'))
             ->when($request->filled('tenant_id'), fn (Builder $q) => $q->where('tenant_id', $request->integer('tenant_id')))
+            ->tap(fn (Builder $q) => $this->filtrarFechas($q, $request, 'fecha_inicio'))
             ->tap(fn (Builder $q) => $this->ordenar($q, $request, ['codigo', 'titulo', 'fecha_inicio', 'created_at'], 'created_at', 'desc'))
             ->paginate($request->integer('por_pagina', 15))
             ->withQueryString();
@@ -80,11 +84,20 @@ class SuperAdminController extends Controller
         $eventos = Evento::with(['tenant', 'expediente', 'responsable'])
             ->when($request->filled('buscar'), fn (Builder $q) => $q->where('titulo', 'like', '%'.$request->input('buscar').'%'))
             ->when($request->filled('tenant_id'), fn (Builder $q) => $q->where('tenant_id', $request->integer('tenant_id')))
+            ->tap(fn (Builder $q) => $this->filtrarFechas($q, $request, 'inicio'))
             ->tap(fn (Builder $q) => $this->ordenar($q, $request, ['titulo', 'inicio', 'created_at'], 'inicio', 'desc'))
             ->paginate($request->integer('por_pagina', 15))
             ->withQueryString();
 
         return EventoResource::collection($eventos);
+    }
+
+    // Rango de fecha genérico: cada recurso decide cuál es su columna de fecha relevante (ej. 'created_at' o 'fecha_inicio').
+    private function filtrarFechas(Builder $query, Request $request, string $columna): void
+    {
+        $query
+            ->when($request->filled('fecha_inicio'), fn (Builder $q) => $q->whereDate($columna, '>=', $request->input('fecha_inicio')))
+            ->when($request->filled('fecha_fin'), fn (Builder $q) => $q->whereDate($columna, '<=', $request->input('fecha_fin')));
     }
 
     /** @param  list<string>  $permitidos */

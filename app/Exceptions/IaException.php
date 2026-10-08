@@ -7,9 +7,18 @@ use RuntimeException;
 // Error de IA con un status HTTP ya decidido; el mensaje es de cara al usuario.
 class IaException extends RuntimeException
 {
-    private function __construct(string $mensaje, public readonly int $status)
+    private function __construct(string $mensaje, public readonly int $status, public readonly ?string $codigo = null)
     {
         parent::__construct($mensaje);
+    }
+
+    public static function limiteExcedido(int $limite): self
+    {
+        return new self(
+            "Alcanzaste el límite de {$limite} consultas a Claude de este mes. Se reinicia el próximo mes.",
+            429,
+            'claude_limit_exceeded',
+        );
     }
 
     public static function sinConfigurar(): self

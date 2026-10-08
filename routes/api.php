@@ -2,18 +2,24 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogoController;
+use App\Http\Controllers\Api\ClaudeUsoController;
 use App\Http\Controllers\Api\ClienteController;
 use App\Http\Controllers\Api\ConfiguracionController;
 use App\Http\Controllers\Api\DocumentoController;
 use App\Http\Controllers\Api\DocumentoIaController;
 use App\Http\Controllers\Api\EtiquetaController;
 use App\Http\Controllers\Api\EventoController;
+use App\Http\Controllers\Api\ExportacionController;
 use App\Http\Controllers\Api\IntegracionController;
 use App\Http\Controllers\Api\ExpedienteController;
 use App\Http\Controllers\Api\MovimientoController;
 use App\Http\Controllers\Api\PanelController;
+use App\Http\Controllers\Api\SuperAdmin\AuditoriaController;
+use App\Http\Controllers\Api\SuperAdmin\DashboardController;
+use App\Http\Controllers\Api\SuperAdmin\ReporteController;
 use App\Http\Controllers\Api\SuperAdmin\SuperAdminAuthController;
 use App\Http\Controllers\Api\SuperAdmin\SuperAdminController;
+use App\Http\Controllers\Api\SuperAdmin\UsuarioEnLineaController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\UsuarioController;
 use App\Http\Controllers\Api\VerificacionController;
@@ -22,6 +28,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthController::class, 'login'])->middleware('throttle:6,1');
 Route::post('registro', [AuthController::class, 'registro'])->middleware('throttle:6,1');
+Route::get('registro/ruc/{numero}', [IntegracionController::class, 'rucRegistro'])->middleware('throttle:6,1');
 
 // /sistema_admin: ruta aparte para soporte técnico, nunca comparte guard con el login normal.
 Route::prefix('sistema-admin')->group(function () {
@@ -35,10 +42,19 @@ Route::prefix('sistema-admin')->group(function () {
         Route::get('clientes', [SuperAdminController::class, 'clientes']);
         Route::get('expedientes', [SuperAdminController::class, 'expedientes']);
         Route::get('eventos', [SuperAdminController::class, 'eventos']);
+
+        Route::get('dashboard', DashboardController::class);
+        Route::get('logs', [AuditoriaController::class, 'logs']);
+        Route::get('usuarios-en-linea', UsuarioEnLineaController::class);
+
+        Route::get('reportes/{modulo}/columnas', [ReporteController::class, 'columnas']);
+        Route::post('reportes', [ReporteController::class, 'store']);
+        Route::get('reportes/{reporte}', [ReporteController::class, 'show']);
+        Route::get('reportes/{reporte}/descargar', [ReporteController::class, 'descargar']);
     });
 });
 
-Route::middleware(['auth:sanctum', 'tenant_user'])->group(function () {
+Route::middleware(['auth:sanctum', 'tenant_user', 'actividad'])->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('yo', [AuthController::class, 'yo']);
     Route::put('perfil/password', [AuthController::class, 'cambiarPassword']);
@@ -48,6 +64,7 @@ Route::middleware(['auth:sanctum', 'tenant_user'])->group(function () {
 
     Route::get('panel', PanelController::class);
     Route::get('catalogos', CatalogoController::class);
+    Route::get('claude-usage', [ClaudeUsoController::class, 'show']);
 
     Route::get('tenant', [TenantController::class, 'show']);
     Route::get('configuracion', [ConfiguracionController::class, 'show']);
@@ -55,6 +72,10 @@ Route::middleware(['auth:sanctum', 'tenant_user'])->group(function () {
         Route::put('tenant', [TenantController::class, 'update']);
         Route::post('tenant/logo', [TenantController::class, 'logo']);
         Route::put('configuracion', [ConfiguracionController::class, 'update']);
+
+        Route::post('exportaciones', [ExportacionController::class, 'store']);
+        Route::get('exportaciones/{exportacion}', [ExportacionController::class, 'show']);
+        Route::get('exportaciones/{exportacion}/descargar', [ExportacionController::class, 'descargar']);
     });
 
     Route::apiResource('clientes', ClienteController::class)->except('destroy');

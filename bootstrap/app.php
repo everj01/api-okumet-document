@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ActualizarActividad;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureTenantUser;
 use App\Http\Middleware\VerificarRol;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'rol' => VerificarRol::class,
             'tenant_user' => EnsureTenantUser::class,
             'super_admin' => EnsureSuperAdmin::class,
+            'actividad' => ActualizarActividad::class,
         ]);
 
         // API pura, sin vista de login: evita que un invitado sin Accept:application/json

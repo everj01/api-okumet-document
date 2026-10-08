@@ -12,6 +12,7 @@
         "laravel/reverb": "^1.12",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
+        "openspout/openspout": "^4.28",
         "predis/predis": "*",
         "smalot/pdfparser": "^2.12"
     },

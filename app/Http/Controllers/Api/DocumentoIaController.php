@@ -142,6 +142,12 @@ class DocumentoIaController extends Controller
 
     private function error(IaException $e): JsonResponse
     {
-        return response()->json(['message' => $e->getMessage()], $e->status);
+        $cuerpo = ['message' => $e->getMessage()];
+
+        if ($e->codigo !== null) {
+            $cuerpo['code'] = $e->codigo;
+        }
+
+        return response()->json($cuerpo, $e->status);
     }
 }

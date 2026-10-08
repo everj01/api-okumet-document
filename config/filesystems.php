@@ -31,6 +31,22 @@ return [
             'report' => false,
         ],
 
+        // ZIPs de exportación: privados, solo se sirven por el controlador
+        'exportaciones' => [
+            'driver' => 'local',
+            'root' => storage_path('app/exportaciones'),
+            'throw' => false,
+            'report' => false,
+        ],
+
+        // XLSX de reportes del super admin: privados, solo se sirven por el controlador
+        'reportes' => [
+            'driver' => 'local',
+            'root' => storage_path('app/reportes'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         // Logos de tenants: públicos, se muestran directo en el frontend
         'logos' => [
             'driver' => 'local',

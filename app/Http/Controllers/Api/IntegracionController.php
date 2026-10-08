@@ -17,6 +17,13 @@ class IntegracionController extends Controller
     // DNI/RUC no cambian de un día para otro: se cachean 30 días para no gastar la cuota mensual de apisperu.
     private const TTL_CACHE_DIAS = 30;
 
+    // Variante pública para /registro: aún no hay tenant/usuario autenticado, así que no puede pasar por
+    // 'integraciones/dniruc'. Solo RUC (autocompletar datos del negocio al crear el tenant).
+    public function rucRegistro(string $numero): JsonResponse
+    {
+        return $this->dniRuc('ruc', $numero);
+    }
+
     public function dniRuc(string $tipo, string $numero): JsonResponse
     {
         $this->validarParametros($tipo, $numero);

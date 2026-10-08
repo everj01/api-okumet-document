@@ -8,6 +8,8 @@ use Anthropic\Messages\Message;
 use App\Exceptions\IaException;
 use App\Models\Documento;
 use App\Models\DocumentoPagina;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -32,6 +34,8 @@ class AsistenteIa
     TXT;
 
     private ?Client $cliente = null;
+
+    public function __construct(private readonly LimiteClaudeService $limite) {}
 
     public function disponible(): bool
     {
@@ -232,6 +236,14 @@ class AsistenteIa
 
         if ($esquema !== null) {
             $salida['format'] = ['type' => 'json_schema', 'schema' => $esquema];
+        }
+
+        // Se cuenta y bloquea aquí, antes de pagar la llamada real: cualquier tarea que pase por
+        // este método (presente o futura) queda cubierta por el límite mensual sin tocar nada más.
+        $usuario = Auth::user();
+
+        if ($usuario instanceof User) {
+            $this->limite->verificarYRegistrar($usuario);
         }
 
         try {

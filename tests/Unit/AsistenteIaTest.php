@@ -20,7 +20,7 @@ class AsistenteIaTest extends TestCase
         $reflexion = new ReflectionMethod(AsistenteIa::class, $metodo);
         $reflexion->setAccessible(true);
 
-        return $reflexion->invoke(new AsistenteIa, ...$argumentos);
+        return $reflexion->invoke(app(AsistenteIa::class), ...$argumentos);
     }
 
     private function documento(int $paginas): Documento

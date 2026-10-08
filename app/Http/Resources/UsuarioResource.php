@@ -17,6 +17,7 @@ class UsuarioResource extends JsonResource
             'email' => $this->email,
             'telefono' => $this->telefono,
             'activo' => $this->activo,
+            'email_verificado' => $this->emailVerificado(),
             'rol_id' => $this->rol_id,
             'rol' => $this->whenLoaded('rol', fn () => [
                 'id' => $this->rol->id,

@@ -39,6 +39,16 @@ class User extends Authenticatable
         return $this->hasMany(Expediente::class, 'abogado_id');
     }
 
+    public function codigosVerificacion(): HasMany
+    {
+        return $this->hasMany(CodigoVerificacion::class);
+    }
+
+    public function emailVerificado(): bool
+    {
+        return $this->email_verified_at !== null;
+    }
+
     public function tieneRol(string ...$roles): bool
     {
         return in_array($this->rol?->nombre, $roles, true);

@@ -15,6 +15,13 @@ class Expediente extends Model
 
     public const ESTADOS = ['abierto', 'en_tramite', 'archivado', 'cerrado'];
 
+    private const ESTADOS_LEGIBLES = [
+        'abierto' => 'Abierto',
+        'en_tramite' => 'En trámite',
+        'archivado' => 'Archivado',
+        'cerrado' => 'Cerrado',
+    ];
+
     protected $fillable = [
         'codigo',
         'titulo',
@@ -24,6 +31,7 @@ class Expediente extends Model
         'juzgado',
         'estado',
         'fecha_inicio',
+        'anio',
         'fecha_cierre',
         'descripcion',
     ];
@@ -88,5 +96,10 @@ class Expediente extends Model
     public function scopeAbiertos(Builder $query): void
     {
         $query->whereIn('estado', ['abierto', 'en_tramite']);
+    }
+
+    public static function estadoLegible(string $estado): string
+    {
+        return self::ESTADOS_LEGIBLES[$estado] ?? $estado;
     }
 }

@@ -32,7 +32,10 @@ class ExpedienteController extends Controller
 
     public function store(StoreExpedienteRequest $request): JsonResponse
     {
-        $expediente = Expediente::create($request->validated())->load(['cliente', 'abogado']);
+        $datos = $request->validated();
+        $datos['anio'] ??= date('Y', strtotime($datos['fecha_inicio']));
+
+        $expediente = Expediente::create($datos)->load(['cliente', 'abogado']);
 
         broadcast(new ExpedienteActualizado($expediente, 'creado'))->toOthers();
 

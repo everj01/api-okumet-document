@@ -27,6 +27,7 @@ class StoreExpedienteRequest extends FormRequest
             'juzgado' => ['nullable', 'string', 'max:150'],
             'estado' => ['required', Rule::in(Expediente::ESTADOS)],
             'fecha_inicio' => ['required', 'date'],
+            'anio' => ['nullable', 'integer', 'digits:4'],
             'fecha_cierre' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
             'descripcion' => ['nullable', 'string', 'max:5000'],
         ];

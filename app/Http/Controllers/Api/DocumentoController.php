@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Events\DocumentoActualizado;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Documento\SincronizarEtiquetasRequest;
 use App\Http\Requests\Documento\StoreDocumentoRequest;
 use App\Http\Resources\DocumentoResource;
 use App\Models\Documento;
@@ -22,10 +23,11 @@ class DocumentoController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $documentos = Documento::select(['id','uuid', 'expediente_id', 'nombre', 'ruta', 'tamano', 'paginas', 'resumen', 'subido_por', 'created_at', 'updated_at'])
-            ->with(['expediente', 'subidoPor'])
+            ->with(['expediente', 'subidoPor', 'etiquetas'])
             ->visiblePara($request->user())
             ->buscar($request->input('buscar'))
             ->when($request->filled('expediente_id'), fn ($query) => $query->where('expediente_id', $request->integer('expediente_id')))
+            ->when($request->filled('etiqueta_id'), fn ($query) => $query->whereHas('etiquetas', fn ($q) => $q->where('etiquetas.id', $request->integer('etiqueta_id'))))
             ->latest()
             ->paginate($request->integer('por_pagina', 10))
             ->withQueryString();
@@ -48,7 +50,7 @@ class DocumentoController extends Controller
         ]);
 
         $this->guardarTexto($documento, $lector);
-        $documento->load(['expediente', 'subidoPor']);
+        $documento->load(['expediente', 'subidoPor', 'etiquetas']);
 
         broadcast(new DocumentoActualizado($documento, 'creado'))->toOthers();
 
@@ -59,7 +61,16 @@ class DocumentoController extends Controller
     {
         $this->authorize('view', $documento);
 
-        return new DocumentoResource($documento->load(['expediente', 'subidoPor', 'consultas.usuario']));
+        return new DocumentoResource($documento->load(['expediente', 'subidoPor', 'etiquetas', 'consultas.usuario']));
+    }
+
+    public function sincronizarEtiquetas(SincronizarEtiquetasRequest $request, Documento $documento): DocumentoResource
+    {
+        $this->authorize('etiquetar', $documento);
+
+        $documento->etiquetas()->sync($request->validated('etiqueta_ids'));
+
+        return new DocumentoResource($documento->load('etiquetas'));
     }
 
     public function archivo(Request $request, Documento $documento): BinaryFileResponse

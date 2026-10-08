@@ -12,7 +12,11 @@ class Evento extends Model
 {
     use BelongsToTenant, HasUuid;
 
-    public const TIPOS = ['audiencia', 'vencimiento', 'reunion', 'otro'];
+    public const TIPOS = [
+        'audiencia', 'vencimiento', 'reunion', 'otro',
+        'plazo_absolver', 'plazo_apelar', 'actuacion_prueba',
+        'sentencia_1_instancia', 'sentencia_2_instancia',
+    ];
 
     public const ESTADOS = ['pendiente', 'realizado', 'cancelado'];
 

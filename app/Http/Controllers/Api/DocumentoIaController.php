@@ -4,19 +4,26 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\IaException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Documento\ExtraerPreviaRequest;
 use App\Http\Requests\Documento\PreguntaRequest;
 use App\Http\Resources\ConsultaResource;
 use App\Http\Resources\ExtraccionResource;
 use App\Models\Documento;
+use App\Models\DocumentoPagina;
 use App\Services\AsistenteIa;
+use App\Services\LectorPdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class DocumentoIaController extends Controller
 {
-    public function __construct(private readonly AsistenteIa $asistente) {}
+    public function __construct(
+        private readonly AsistenteIa $asistente,
+        private readonly LectorPdf $lector,
+    ) {}
 
     public function resumen(Documento $documento): JsonResponse
     {
@@ -87,6 +94,45 @@ class DocumentoIaController extends Controller
         );
 
         return (new ExtraccionResource($extraccion))->response();
+    }
+
+    // Analiza un PDF sin crear ningún registro: lo usa el formulario de "nuevo expediente" para
+    // autocompletarse antes de que el usuario confirme la creación. El archivo se descarta al terminar.
+    public function extraerPrevia(ExtraerPreviaRequest $request): JsonResponse
+    {
+        $vacio = ['campos' => (object) [], 'partes' => [], 'fechas_clave' => []];
+
+        try {
+            $paginas = $this->lector->extraerPaginas($request->file('archivo')->getRealPath());
+        } catch (Throwable $e) {
+            Log::warning("No se pudo leer el PDF en extracción previa: {$e->getMessage()}");
+
+            return response()->json(['data' => $vacio]);
+        }
+
+        if ($paginas === []) {
+            return response()->json(['data' => $vacio]);
+        }
+
+        $documento = new Documento(['paginas' => count($paginas)]);
+        $documento->setRelation(
+            'paginasTexto',
+            collect($paginas)->map(
+                fn (string $texto, int $numero) => new DocumentoPagina(['numero' => $numero, 'texto' => $texto])
+            )->values()
+        );
+
+        try {
+            $datos = $this->asistente->extraer($documento);
+        } catch (IaException $e) {
+            return response()->json(['data' => $vacio]);
+        }
+
+        return response()->json(['data' => [
+            'campos' => (object) $datos['campos'],
+            'partes' => $datos['partes'],
+            'fechas_clave' => $datos['fechas_clave'],
+        ]]);
     }
 
     private function verificarTexto(Documento $documento): void

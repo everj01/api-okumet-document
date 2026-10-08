@@ -25,6 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant_user' => EnsureTenantUser::class,
             'super_admin' => EnsureSuperAdmin::class,
         ]);
+
+        // API pura, sin vista de login: evita que un invitado sin Accept:application/json
+        // reviente con "Route [login] not defined" (el default de Laravel intenta route('login')).
+        $middleware->redirectGuestsTo(fn () => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

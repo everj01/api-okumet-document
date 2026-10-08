@@ -18,6 +18,7 @@ class ExpedienteResource extends JsonResource
             'juzgado' => $this->juzgado,
             'estado' => $this->estado,
             'fecha_inicio' => $this->fecha_inicio?->toDateString(),
+            'anio' => $this->anio,
             'fecha_cierre' => $this->fecha_cierre?->toDateString(),
             'descripcion' => $this->descripcion,
             'cliente_id' => $this->cliente_id,

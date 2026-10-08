@@ -18,12 +18,14 @@ class DocumentoResource extends JsonResource
             'paginas' => $this->paginas,
             'resumen' => $this->resumen,
             'expediente' => $this->whenLoaded('expediente', fn () => [
+                
                 'id' => $this->expediente->id,
                 'uuid' => $this->expediente->uuid,
                 'codigo' => $this->expediente->codigo,
                 'titulo' => $this->expediente->titulo,
             ]),
             'subido_por' => $this->whenLoaded('subidoPor', fn () => $this->subidoPor?->name),
+            'etiquetas' => EtiquetaResource::collection($this->whenLoaded('etiquetas')),
             'consultas' => ConsultaResource::collection($this->whenLoaded('consultas')),
             'creado_en' => $this->created_at?->toDateTimeString(),
         ];

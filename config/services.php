@@ -44,6 +44,11 @@ return [
         'limite_caracteres' => (int) env('ANTHROPIC_LIMITE_CARACTERES', 1500000),
     ],
 
+    'apisperu' => [
+        // Consulta DNI/RUC (dniruc.apisperu.com). Límite del plan: 1000 consultas/mes.
+        'token' => env('APISPERU_TOKEN'),
+    ],
+
     'super_admin' => [
         // Clave previa al login de soporte técnico, independiente del login normal.
         'clave' => env('SUPER_ADMIN_CLAVE', '123456'),

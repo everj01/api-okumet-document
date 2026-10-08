@@ -20,7 +20,7 @@ class EnviarRecordatorios extends Command
 
     public function handle(): int
     {
-        $eventos = Evento::with(['responsable', 'expediente'])
+        $eventos = Evento::with(['responsable', 'expediente', 'tenant'])
             ->pendientes()
             ->whereNull('recordatorio_enviado_en')
             ->whereNotNull('responsable_id')
@@ -39,8 +39,10 @@ class EnviarRecordatorios extends Command
                 continue;
             }
 
+            $copias = array_diff($evento->tenant?->correosCc() ?? [], [$correo]);
+
             try {
-                Mail::to($correo)->send(new RecordatorioMail($evento));
+                Mail::to($correo)->cc($copias)->send(new RecordatorioMail($evento));
 
                 $evento->update(['recordatorio_enviado_en' => now()]);
                 $enviados++;

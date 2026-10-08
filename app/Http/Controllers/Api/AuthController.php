@@ -7,9 +7,12 @@ use App\Http\Requests\Auth\CambiarPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegistroRequest;
 use App\Http\Resources\UsuarioResource;
+use App\Models\AccesoLog;
 use App\Models\Rol;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\RegistradorAcceso;
+use App\Services\VerificadorCorreo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +21,11 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    public function __construct(
+        private readonly RegistradorAcceso $registradorAcceso,
+        private readonly VerificadorCorreo $verificadorCorreo,
+    ) {}
+
     // Alta pública: crea un tenant nuevo con quien se registra como su único administrador.
     public function registro(RegistroRequest $request): JsonResponse
     {
@@ -41,6 +49,9 @@ class AuthController extends Controller
             return $admin;
         });
 
+        $this->verificadorCorreo->generarYEnviar($admin);
+        $this->registradorAcceso->registrar($request, AccesoLog::VERIFICACION_PENDIENTE_MOSTRADA, $admin);
+
         return response()->json([
             'token' => $admin->createToken('okd-web')->plainTextToken,
             'usuario' => new UsuarioResource($admin->load(['rol', 'tenant'])),
@@ -52,15 +63,25 @@ class AuthController extends Controller
         $usuario = User::withoutGlobalScopes()->with(['rol', 'tenant'])->where('email', $request->email)->first();
 
         if (! $usuario || ! Hash::check($request->password, $usuario->password)) {
+            $this->registradorAcceso->registrar($request, AccesoLog::LOGIN_FALLIDO, $usuario, $request->email);
+
             throw ValidationException::withMessages([
                 'email' => ['El correo o la contraseña no son correctos.'],
             ]);
         }
 
         if (! $usuario->activo) {
+            $this->registradorAcceso->registrar($request, AccesoLog::LOGIN_FALLIDO, $usuario);
+
             throw ValidationException::withMessages([
                 'email' => ['Tu usuario está desactivado. Comunícate con el administrador.'],
             ]);
+        }
+
+        $this->registradorAcceso->registrar($request, AccesoLog::LOGIN_EXITOSO, $usuario);
+
+        if (! $usuario->emailVerificado()) {
+            $this->registradorAcceso->registrar($request, AccesoLog::VERIFICACION_PENDIENTE_MOSTRADA, $usuario);
         }
 
         return response()->json([
@@ -71,6 +92,8 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
+        $this->registradorAcceso->registrar($request, AccesoLog::LOGOUT, $request->user());
+
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Sesión cerrada.']);

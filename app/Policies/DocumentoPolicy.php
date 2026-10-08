@@ -25,4 +25,10 @@ class DocumentoPolicy
     {
         return $this->view($usuario, $documento);
     }
+
+    // Etiquetar es editar el documento: mismo acceso que verlo.
+    public function etiquetar(User $usuario, Documento $documento): bool
+    {
+        return $this->view($usuario, $documento);
+    }
 }

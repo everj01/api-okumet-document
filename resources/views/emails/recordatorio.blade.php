@@ -1,4 +1,5 @@
-<x-mail.layout :tipo-notificacion="$tipoEtiqueta" :titulo="$evento->titulo" :color-etiqueta="$colorEtiqueta">
+<x-mail.layout :tipo-notificacion="$tipoEtiqueta" :titulo="$evento->titulo" :color-etiqueta="$colorEtiqueta"
+    :logo-url="$logoUrl" :nombre-negocio="$nombreNegocio">
     <p style="margin:0 0 16px; font-size:14px; line-height:1.5;">
         Te recordamos que tienes {{ $tipoTexto }} próxima:
     </p>

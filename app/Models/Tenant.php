@@ -20,11 +20,21 @@ class Tenant extends Model
         'telefono',
         'email',
         'activo',
+        'configuracion',
     ];
 
     protected function casts(): array
     {
-        return ['activo' => 'boolean'];
+        return [
+            'activo' => 'boolean',
+            'configuracion' => 'array',
+        ];
+    }
+
+    // Correos en copia para notificaciones (agenda, etc), configurables por el admin del tenant.
+    public function correosCc(): array
+    {
+        return $this->configuracion['correos_cc'] ?? [];
     }
 
     public function usuarios(): HasMany

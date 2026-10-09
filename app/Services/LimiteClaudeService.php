@@ -78,6 +78,7 @@ class LimiteClaudeService
 
     private function limiteSegunRol(User $usuario): int
     {
-        return $usuario->tieneRol(Rol::ADMIN) ? self::LIMITE_ADMIN : self::LIMITE_USUARIO;
+        return $usuario->limite_claude_override
+            ?? ($usuario->tieneRol(Rol::ADMIN) ? self::LIMITE_ADMIN : self::LIMITE_USUARIO);
     }
 }

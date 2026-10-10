@@ -7,6 +7,7 @@ use App\Models\Evento;
 use App\Models\Exportacion;
 use App\Models\Expediente;
 use App\Models\Movimiento;
+use App\Services\Notificador;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -30,7 +31,7 @@ class GenerarExportacion implements ShouldQueue
 
     public function __construct(private readonly Exportacion $exportacion) {}
 
-    public function handle(): void
+    public function handle(Notificador $notificador): void
     {
         $this->exportacion->update(['estado' => 'procesando']);
 
@@ -43,10 +44,23 @@ class GenerarExportacion implements ShouldQueue
                 'total_expedientes' => $total,
                 'completado_en' => now(),
             ]);
+
+            $this->notificar($notificador, 'exportacion_completada', 'Exportación lista', "Tu exportación de {$total} expediente(s) ya está lista para descargar.");
         } catch (Throwable $e) {
             Log::error('exportacion.fallo', ['exportacion_id' => $this->exportacion->id, 'mensaje' => $e->getMessage()]);
 
             $this->exportacion->update(['estado' => 'fallido', 'error_mensaje' => $e->getMessage()]);
+
+            $this->notificar($notificador, 'exportacion_fallida', 'La exportación falló', 'No se pudo generar tu exportación de datos. Intenta de nuevo.');
+        }
+    }
+
+    private function notificar(Notificador $notificador, string $tipo, string $titulo, string $mensaje): void
+    {
+        $usuario = $this->exportacion->solicitadoPor;
+
+        if ($usuario !== null) {
+            $notificador->enviar($usuario, $tipo, $titulo, $mensaje, ['exportacion_uuid' => $this->exportacion->uuid]);
         }
     }
 

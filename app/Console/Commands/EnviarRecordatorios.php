@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Mail\RecordatorioMail;
 use App\Models\Evento;
+use App\Services\Notificador;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -18,7 +19,7 @@ class EnviarRecordatorios extends Command
     // Dominios reservados para documentación/pruebas (RFC 2606), nunca reciben correo real.
     private const DOMINIOS_RESERVADOS = ['example.com', 'example.net', 'example.org', 'example.edu', 'test', 'invalid', 'localhost'];
 
-    public function handle(): int
+    public function handle(Notificador $notificador): int
     {
         $eventos = Evento::with(['responsable', 'expediente', 'tenant'])
             ->pendientes()
@@ -46,6 +47,15 @@ class EnviarRecordatorios extends Command
 
                 $evento->update(['recordatorio_enviado_en' => now()]);
                 $enviados++;
+
+                // Mismo disparador que el correo: si el correo no se manda (dominio inválido o fallo), tampoco se notifica.
+                $notificador->enviar(
+                    $evento->responsable,
+                    'evento_proximo',
+                    'Evento próximo',
+                    "Tienes \"{$evento->titulo}\" el {$evento->inicio->format('d/m/Y H:i')}.",
+                    ['evento_uuid' => $evento->uuid],
+                );
             } catch (Throwable $e) {
                 Log::warning("No se pudo enviar recordatorio del evento #{$evento->id} a {$correo}: {$e->getMessage()}");
             }
@@ -53,7 +63,35 @@ class EnviarRecordatorios extends Command
 
         $this->info("Recordatorios enviados: {$enviados}");
 
+        $this->notificarVencidos($notificador);
+
         return self::SUCCESS;
+    }
+
+    // Misma condición que el widget "Fechas vencidas" del panel (ver PanelController::vencidos):
+    // pendiente y con inicio ya pasado. Una sola notificación por evento, nunca se repite.
+    private function notificarVencidos(Notificador $notificador): void
+    {
+        $vencidos = Evento::with('responsable')
+            ->pendientes()
+            ->whereNotNull('responsable_id')
+            ->whereNull('notificado_vencido_en')
+            ->where('inicio', '<', now())
+            ->get();
+
+        foreach ($vencidos as $evento) {
+            if ($evento->responsable) {
+                $notificador->enviar(
+                    $evento->responsable,
+                    'evento_vencido',
+                    'Evento vencido',
+                    "\"{$evento->titulo}\" venció el {$evento->inicio->format('d/m/Y H:i')} sin marcarse como realizado.",
+                    ['evento_uuid' => $evento->uuid],
+                );
+            }
+
+            $evento->update(['notificado_vencido_en' => now()]);
+        }
     }
 
     private function esCorreoValido(string $correo): bool

@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\ExportacionController;
 use App\Http\Controllers\Api\IntegracionController;
 use App\Http\Controllers\Api\ExpedienteController;
 use App\Http\Controllers\Api\MovimientoController;
+use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\PanelController;
 use App\Http\Controllers\Api\SuperAdmin\AuditoriaController;
 use App\Http\Controllers\Api\SuperAdmin\DashboardController;
@@ -65,6 +66,11 @@ Route::middleware(['auth:sanctum', 'tenant_user', 'actividad'])->group(function 
     Route::get('panel', PanelController::class);
     Route::get('catalogos', CatalogoController::class);
     Route::get('claude-usage', [ClaudeUsoController::class, 'show']);
+
+    Route::get('notificaciones', [NotificacionController::class, 'index']);
+    Route::get('notificaciones/resumen', [NotificacionController::class, 'resumen']);
+    Route::patch('notificaciones/{notificacion}/leer', [NotificacionController::class, 'leer']);
+    Route::post('notificaciones/leer-todas', [NotificacionController::class, 'leerTodas']);
 
     Route::get('tenant', [TenantController::class, 'show']);
     Route::get('configuracion', [ConfiguracionController::class, 'show']);

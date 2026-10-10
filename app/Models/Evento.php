@@ -31,6 +31,7 @@ class Evento extends Model
         'notas',
         'recordatorio_dias',
         'recordatorio_enviado_en',
+        'notificado_vencido_en',
         'estado',
     ];
 

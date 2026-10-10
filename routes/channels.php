@@ -28,3 +28,8 @@ Broadcast::channel('expedientes.todos', function (User $user) {
 Broadcast::channel('expedientes.abogado.{abogadoId}', function (User $user, int $abogadoId) {
     return $user->tieneRol(Rol::ADMIN, Rol::ASISTENTE) || $user->id === $abogadoId;
 });
+
+// Notificaciones y actualizaciones de créditos de IA en tiempo real: estrictamente personal.
+Broadcast::channel('usuario.{usuarioId}', function (User $user, int $usuarioId) {
+    return $user->id === $usuarioId;
+});

@@ -15,8 +15,8 @@ class MailTest extends Command
     {
         $email = $this->argument('email');
 
-        Mail::raw('Este es un correo de prueba desde OKD Legal. Si lo recibes, la configuración SMTP funciona correctamente.', function ($mail) use ($email) {
-            $mail->to($email)->subject('Correo de prueba - OKD Legal');
+        Mail::raw('Este es un correo de prueba desde Okumet Document. Si lo recibes, la configuración SMTP funciona correctamente.', function ($mail) use ($email) {
+            $mail->to($email)->subject('Correo de prueba - Okumet Document');
         });
 
         $this->info("Correo de prueba enviado a {$email}");

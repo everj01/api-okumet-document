@@ -115,4 +115,7 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    // En copia oculta en TODO correo que salga del sistema, para confirmar que el envío real funciona.
+    'bcc' => env('MAIL_BCC'),
+
 ];

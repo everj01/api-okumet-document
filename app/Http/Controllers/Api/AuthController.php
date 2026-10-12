@@ -17,6 +17,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -104,6 +106,19 @@ class AuthController extends Controller
         return response()->json(['usuario' => new UsuarioResource($request->user()->load(['rol', 'tenant']))]);
     }
 
+    public function actualizarDatos(Request $request): JsonResponse
+    {
+        $datos = $request->validate([
+            'dni' => ['nullable', 'string', 'max:20'],
+            'colegiatura' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $usuario = $request->user();
+        $usuario->update($datos);
+
+        return response()->json(['usuario' => new UsuarioResource($usuario->load(['rol', 'tenant']))]);
+    }
+
     public function cambiarPassword(CambiarPasswordRequest $request): JsonResponse
     {
         $usuario = $request->user();
@@ -117,5 +132,35 @@ class AuthController extends Controller
         $usuario->update(['password' => $request->password]);
 
         return response()->json(['message' => 'Contraseña actualizada.']);
+    }
+
+    public function foto(Request $request): JsonResponse
+    {
+        $request->validate([
+            'foto' => ['required', 'image', 'max:2048'],
+        ]);
+
+        $usuario = $request->user();
+
+        if ($usuario->foto_path) {
+            Storage::disk('avatares')->delete($usuario->foto_path);
+        }
+
+        $ruta = $request->file('foto')->store((string) Str::uuid(), 'avatares');
+        $usuario->update(['foto_path' => $ruta]);
+
+        return response()->json(['foto_url' => Storage::disk('avatares')->url($ruta)]);
+    }
+
+    public function quitarFoto(Request $request): JsonResponse
+    {
+        $usuario = $request->user();
+
+        if ($usuario->foto_path) {
+            Storage::disk('avatares')->delete($usuario->foto_path);
+            $usuario->update(['foto_path' => null]);
+        }
+
+        return response()->json(['message' => 'Foto eliminada.']);
     }
 }

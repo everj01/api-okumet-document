@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\ExpedienteController;
 use App\Http\Controllers\Api\MovimientoController;
 use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\PanelController;
+use App\Http\Controllers\Api\RecuperacionPasswordController;
 use App\Http\Controllers\Api\SuperAdmin\AuditoriaController;
 use App\Http\Controllers\Api\SuperAdmin\DashboardController;
 use App\Http\Controllers\Api\SuperAdmin\ReporteController;
@@ -30,6 +31,9 @@ use Illuminate\Support\Facades\Route;
 Route::post('login', [AuthController::class, 'login'])->middleware('throttle:6,1');
 Route::post('registro', [AuthController::class, 'registro'])->middleware('throttle:6,1');
 Route::get('registro/ruc/{numero}', [IntegracionController::class, 'rucRegistro'])->middleware('throttle:6,1');
+
+Route::post('password/olvide', [RecuperacionPasswordController::class, 'solicitar'])->middleware('throttle:6,1');
+Route::post('password/restablecer', [RecuperacionPasswordController::class, 'restablecer'])->middleware('throttle:6,1');
 
 // /sistema_admin: ruta aparte para soporte técnico, nunca comparte guard con el login normal.
 Route::prefix('sistema-admin')->group(function () {
@@ -58,7 +62,10 @@ Route::prefix('sistema-admin')->group(function () {
 Route::middleware(['auth:sanctum', 'tenant_user', 'actividad'])->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('yo', [AuthController::class, 'yo']);
+    Route::put('perfil', [AuthController::class, 'actualizarDatos']);
     Route::put('perfil/password', [AuthController::class, 'cambiarPassword']);
+    Route::post('perfil/foto', [AuthController::class, 'foto']);
+    Route::delete('perfil/foto', [AuthController::class, 'quitarFoto']);
 
     Route::post('verificacion/reenviar', [VerificacionController::class, 'reenviar']);
     Route::post('verificacion/confirmar', [VerificacionController::class, 'confirmar']);

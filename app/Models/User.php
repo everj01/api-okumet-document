@@ -16,7 +16,7 @@ class User extends Authenticatable
 {
     use BelongsToTenant, HasApiTokens, HasFactory, HasUuid, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'rol_id', 'telefono', 'activo'];
+    protected $fillable = ['name', 'email', 'password', 'rol_id', 'telefono', 'dni', 'colegiatura', 'foto_path', 'activo'];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -27,6 +27,7 @@ class User extends Authenticatable
             'last_activity_at' => 'datetime',
             'password' => 'hashed',
             'activo' => 'boolean',
+            'abogado_habilitado' => 'boolean',
         ];
     }
 
@@ -43,6 +44,11 @@ class User extends Authenticatable
     public function codigosVerificacion(): HasMany
     {
         return $this->hasMany(CodigoVerificacion::class);
+    }
+
+    public function recuperacionesPassword(): HasMany
+    {
+        return $this->hasMany(RecuperacionPassword::class);
     }
 
     public function emailVerificado(): bool

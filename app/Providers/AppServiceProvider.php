@@ -15,6 +15,8 @@ use App\Observers\Auditoria\UsuarioAuditoriaObserver;
 use App\Observers\DocumentoObserver;
 use App\Observers\EventoObserver;
 use App\Observers\ExpedienteObserver;
+use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,5 +37,14 @@ class AppServiceProvider extends ServiceProvider
         Documento::observe(DocumentoAuditoriaObserver::class);
         Evento::observe(EventoAuditoriaObserver::class);
         User::observe(UsuarioAuditoriaObserver::class);
+
+        // MAIL_BCC: copia oculta en todo correo saliente, para confirmar que el envío real funciona.
+        // Laravel no tiene un alwaysBcc() nativo (solo alwaysFrom/alwaysTo/alwaysReplyTo), así que se
+        // engancha al evento que dispara justo antes de enviar cualquier mensaje, sea Mailable o Mail::raw.
+        if (filled(config('mail.bcc'))) {
+            Event::listen(MessageSending::class, function (MessageSending $event) {
+                $event->message->addBcc(config('mail.bcc'));
+            });
+        }
     }
 }

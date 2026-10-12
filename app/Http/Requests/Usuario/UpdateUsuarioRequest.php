@@ -16,6 +16,8 @@ class UpdateUsuarioRequest extends FormRequest
             'password' => ['nullable', Password::min(8)],
             'rol_id' => ['required', 'integer', 'exists:roles,id'],
             'telefono' => ['nullable', 'string', 'max:30'],
+            'dni' => ['nullable', 'string', 'max:20'],
+            'colegiatura' => ['nullable', 'string', 'max:20'],
             'activo' => ['boolean'],
         ];
     }
@@ -27,6 +29,8 @@ class UpdateUsuarioRequest extends FormRequest
             'email' => 'correo',
             'password' => 'contraseña',
             'rol_id' => 'rol',
+            'dni' => 'DNI',
+            'colegiatura' => 'colegiatura',
         ];
     }
 }

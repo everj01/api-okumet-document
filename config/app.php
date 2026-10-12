@@ -54,6 +54,10 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // Base del SPA (okd-frontend), para construir enlaces que el usuario abre en el navegador
+    // (ej. restablecer contraseña). Distinto de APP_URL, que es la API.
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

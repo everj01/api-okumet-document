@@ -63,7 +63,7 @@ class Expediente extends Model
     {
         // Se excluye 'texto' (el PDF extraído, puede pesar varios MB): nunca se usa fuera del servidor.
         return $this->hasMany(Documento::class)
-            ->select(['id', 'expediente_id', 'nombre', 'ruta', 'tamano', 'paginas', 'resumen', 'subido_por', 'created_at', 'updated_at'])
+            ->select(['id', 'uuid', 'expediente_id', 'nombre', 'ruta', 'tamano', 'paginas', 'resumen', 'subido_por', 'created_at', 'updated_at'])
             ->latest();
     }
 

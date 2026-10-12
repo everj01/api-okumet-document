@@ -144,7 +144,10 @@ class AsistenteIa
         la confianza a "baja".
 
         En "partes" lista las personas o entidades que intervienen, con su rol en minúsculas
-        (demandante, demandado, tercero, procurador, etc.).
+        (demandante, demandado, tercero, procurador, etc.). Si junto al nombre de una parte
+        aparece su DNI, RUC u otro número de documento de identidad, inclúyelo en
+        "numero_documento" tal como está escrito (solo dígitos, sin puntos ni guiones); si no
+        aparece, pon null. No lo inventes ni lo confundas con el número de expediente.
         En "fechas_clave" lista audiencias, plazos y vencimientos con una descripción corta.
         Ambas listas pueden ir vacías. "pagina" es null cuando no puedas ubicar el dato.
         TXT;
@@ -173,9 +176,10 @@ class AsistenteIa
                         'properties' => [
                             'nombre' => ['type' => 'string'],
                             'rol' => ['type' => 'string'],
+                            'numero_documento' => ['type' => ['string', 'null']],
                             'pagina' => ['type' => ['integer', 'null']],
                         ],
-                        'required' => ['nombre', 'rol', 'pagina'],
+                        'required' => ['nombre', 'rol', 'numero_documento', 'pagina'],
                         'additionalProperties' => false,
                     ],
                 ],
@@ -450,7 +454,7 @@ class AsistenteIa
     }
 
     /**
-     * @return list<array{nombre: string, rol: string, pagina: int|null}>
+     * @return list<array{nombre: string, rol: string, numero_documento: string|null, pagina: int|null}>
      */
     private function partesValidas(mixed $partes, Documento $documento): array
     {
@@ -471,9 +475,13 @@ class AsistenteIa
                 continue;
             }
 
+            // Solo dígitos: si el modelo mete puntos, guiones o texto suelto, se descarta antes de guardarlo.
+            $numeroDocumento = preg_replace('/\D/', '', (string) ($parte['numero_documento'] ?? ''));
+
             $validas[] = [
                 'nombre' => mb_substr($nombre, 0, 180),
                 'rol' => mb_strtolower(mb_substr(trim((string) ($parte['rol'] ?? '')), 0, 60)),
+                'numero_documento' => $numeroDocumento !== '' ? mb_substr($numeroDocumento, 0, 20) : null,
                 'pagina' => $this->paginaValida($parte['pagina'] ?? null, $documento),
             ];
         }

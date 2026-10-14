@@ -50,10 +50,26 @@ class Documento extends Model
         return $this->belongsToMany(Etiqueta::class);
     }
 
-    // Visible solo si lo es su expediente.
+    public function historial(): HasMany
+    {
+        return $this->hasMany(DocumentoHistorial::class)->latest('creado_en');
+    }
+
+    // Con expediente: visible si lo es su expediente. Huérfano (expediente_id null): solo quien lo
+    // subió, o un admin (confirmado con el usuario: asistente y otros abogados no lo ven hasta que
+    // se asigne a un expediente).
     public function scopeVisiblePara(Builder $query, ?User $usuario): void
     {
-        $query->whereHas('expediente', fn (Builder $expediente) => $expediente->visiblePara($usuario));
+        $query->where(function (Builder $q) use ($usuario) {
+            $q->whereHas('expediente', fn (Builder $expediente) => $expediente->visiblePara($usuario))
+                ->orWhere(function (Builder $huerfano) use ($usuario) {
+                    $huerfano->whereNull('expediente_id')
+                        ->when(
+                            ! $usuario?->tieneRol(Rol::ADMIN),
+                            fn (Builder $q) => $q->where('subido_por', $usuario?->id)
+                        );
+                });
+        });
     }
 
     public function scopeBuscar(Builder $query, ?string $texto): void

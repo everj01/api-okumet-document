@@ -6,6 +6,7 @@ use App\Http\Resources\DocumentoResource;
 use App\Models\Documento;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -21,7 +22,10 @@ class DocumentoActualizado implements ShouldBroadcastNow
 
     public function broadcastOn(): array
     {
-        return [new Channel("expediente.{$this->documento->expediente_id}")];
+        // Huérfano (sin expediente todavía): solo quien lo subió lo está mirando en vivo.
+        return [$this->documento->expediente_id !== null
+            ? new Channel("expediente.{$this->documento->expediente_id}")
+            : new PrivateChannel("usuario.{$this->documento->subido_por}")];
     }
 
     public function broadcastAs(): string

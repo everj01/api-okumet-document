@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AlmacenamientoController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogoController;
 use App\Http\Controllers\Api\ClaudeUsoController;
@@ -16,9 +17,11 @@ use App\Http\Controllers\Api\MovimientoController;
 use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\PanelController;
 use App\Http\Controllers\Api\RecuperacionPasswordController;
+use App\Http\Controllers\Api\ReporteFalloController;
 use App\Http\Controllers\Api\SuperAdmin\AuditoriaController;
 use App\Http\Controllers\Api\SuperAdmin\DashboardController;
 use App\Http\Controllers\Api\SuperAdmin\ReporteController;
+use App\Http\Controllers\Api\SuperAdmin\ReporteFalloController as SuperAdminReporteFalloController;
 use App\Http\Controllers\Api\SuperAdmin\SuperAdminAuthController;
 use App\Http\Controllers\Api\SuperAdmin\SuperAdminController;
 use App\Http\Controllers\Api\SuperAdmin\UsuarioEnLineaController;
@@ -56,6 +59,10 @@ Route::prefix('sistema-admin')->group(function () {
         Route::post('reportes', [ReporteController::class, 'store']);
         Route::get('reportes/{reporte}', [ReporteController::class, 'show']);
         Route::get('reportes/{reporte}/descargar', [ReporteController::class, 'descargar']);
+
+        Route::get('reportes-fallos', [SuperAdminReporteFalloController::class, 'index']);
+        Route::get('reportes-fallos/{reporteFallo}/captura', [SuperAdminReporteFalloController::class, 'captura']);
+        Route::patch('reportes-fallos/{reporteFallo}/resolver', [SuperAdminReporteFalloController::class, 'resolver']);
     });
 });
 
@@ -73,6 +80,7 @@ Route::middleware(['auth:sanctum', 'tenant_user', 'actividad'])->group(function 
     Route::get('panel', PanelController::class);
     Route::get('catalogos', CatalogoController::class);
     Route::get('claude-usage', [ClaudeUsoController::class, 'show']);
+    Route::get('almacenamiento-usage', [AlmacenamientoController::class, 'show']);
 
     Route::get('notificaciones', [NotificacionController::class, 'index']);
     Route::get('notificaciones/resumen', [NotificacionController::class, 'resumen']);
@@ -98,17 +106,21 @@ Route::middleware(['auth:sanctum', 'tenant_user', 'actividad'])->group(function 
 
     Route::post('documentos/extraer-previa', [DocumentoIaController::class, 'extraerPrevia']);
     Route::get('documentos', [DocumentoController::class, 'index']);
+    Route::post('documentos', [DocumentoController::class, 'storeSinExpediente']);
     Route::get('documentos/{documento}', [DocumentoController::class, 'show']);
     Route::get('documentos/{documento}/archivo', [DocumentoController::class, 'archivo']);
     Route::post('documentos/{documento}/resumen', [DocumentoIaController::class, 'resumen']);
     Route::post('documentos/{documento}/preguntas', [DocumentoIaController::class, 'preguntar']);
     Route::post('documentos/{documento}/extraccion', [DocumentoIaController::class, 'extraccion']);
+    Route::post('documentos/{documento}/asignar-expediente', [DocumentoController::class, 'asignarExpediente']);
     Route::put('documentos/{documento}/etiquetas', [DocumentoController::class, 'sincronizarEtiquetas']);
 
     Route::get('etiquetas', [EtiquetaController::class, 'index']);
     Route::post('etiquetas', [EtiquetaController::class, 'store']);
     Route::put('etiquetas/{etiqueta}', [EtiquetaController::class, 'update']);
     Route::delete('etiquetas/{etiqueta}', [EtiquetaController::class, 'destroy']);
+
+    Route::post('reportes-fallos', [ReporteFalloController::class, 'store']);
 
     Route::get('integraciones/dniruc/{tipo}/{numero}', [IntegracionController::class, 'dniRuc']);
 

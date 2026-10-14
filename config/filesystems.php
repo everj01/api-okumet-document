@@ -47,6 +47,14 @@ return [
             'report' => false,
         ],
 
+        // Capturas de "reportar falla": privadas, solo las ve el super admin
+        'reportes_fallos' => [
+            'driver' => 'local',
+            'root' => storage_path('app/reportes_fallos'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         // Logos de tenants: públicos, se muestran directo en el frontend
         'logos' => [
             'driver' => 'local',

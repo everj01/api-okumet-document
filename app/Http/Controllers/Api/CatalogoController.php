@@ -7,6 +7,7 @@ use App\Models\Cliente;
 use App\Models\Etiqueta;
 use App\Models\Evento;
 use App\Models\Expediente;
+use App\Models\ReporteFallo;
 use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -23,6 +24,7 @@ class CatalogoController extends Controller
             'estados_expediente' => Expediente::ESTADOS,
             'tipos_evento' => Evento::TIPOS,
             'etiquetas' => Etiqueta::orderBy('nombre')->get(['id', 'uuid', 'nombre', 'color']),
+            'motivos_reporte_fallo' => ReporteFallo::MOTIVOS,
         ]);
     }
 }

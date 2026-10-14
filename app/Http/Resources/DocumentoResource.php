@@ -17,16 +17,16 @@ class DocumentoResource extends JsonResource
             'tamano' => $this->tamano,
             'paginas' => $this->paginas,
             'resumen' => $this->resumen,
-            'expediente' => $this->whenLoaded('expediente', fn () => [
-                
+            'expediente' => $this->whenLoaded('expediente', fn () => $this->expediente ? [
                 'id' => $this->expediente->id,
                 'uuid' => $this->expediente->uuid,
                 'codigo' => $this->expediente->codigo,
                 'titulo' => $this->expediente->titulo,
-            ]),
+            ] : null),
             'subido_por' => $this->whenLoaded('subidoPor', fn () => $this->subidoPor?->name),
             'etiquetas' => EtiquetaResource::collection($this->whenLoaded('etiquetas')),
             'consultas' => ConsultaResource::collection($this->whenLoaded('consultas')),
+            'historial' => DocumentoHistorialResource::collection($this->whenLoaded('historial')),
             'creado_en' => $this->created_at?->toDateTimeString(),
         ];
     }

@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-// Solo tablas por ahora: sin lógica de negocio ni endpoints hasta que se defina el uso real.
 class Plan extends Model
 {
     protected $table = 'planes';
@@ -14,9 +14,9 @@ class Plan extends Model
         'nombre',
         'descripcion',
         'precio',
-        'limite_llamadas_claude_admin',
-        'limite_llamadas_claude_usuario',
+        'limite_llamadas_claude',
         'limite_usuarios',
+        'limite_almacenamiento_mb',
         'activo',
     ];
 
@@ -31,5 +31,16 @@ class Plan extends Model
     public function suscripciones(): HasMany
     {
         return $this->hasMany(Suscripcion::class);
+    }
+
+    public function scopeActivos(Builder $query): void
+    {
+        $query->where('activo', true);
+    }
+
+    // Único plan con precio 0: define si el corte al vencer es inmediato (Free) o con gracia (pagado).
+    public function esGratuito(): bool
+    {
+        return (float) $this->precio === 0.0;
     }
 }

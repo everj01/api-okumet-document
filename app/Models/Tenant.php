@@ -51,4 +51,21 @@ class Tenant extends Model
     {
         return $this->hasMany(Expediente::class);
     }
+
+    public function suscripciones(): HasMany
+    {
+        return $this->hasMany(Suscripcion::class);
+    }
+
+    public function suscripcionActual(): ?Suscripcion
+    {
+        return $this->suscripciones()->with('plan')->latest('id')->first();
+    }
+
+    // Sin suscripción (no debería pasar tras la migración inicial) se trata como no bloqueado:
+    // un bug en este cálculo no debe sacar a nadie de la plataforma por las dudas.
+    public function estaBloqueado(): bool
+    {
+        return (bool) $this->suscripcionActual()?->estaBloqueada();
+    }
 }

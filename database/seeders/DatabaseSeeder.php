@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
             Rol::updateOrCreate(['nombre' => $rol['nombre']], $rol);
         }
 
+        $this->call(PlanSeeder::class);
+
         // Sin usuario autenticado durante el seed: el tenant_id se asigna a mano en vez de vía BelongsToTenant.
         $tenant = Tenant::firstOrCreate(['nombre_comercial' => 'Principal']);
 

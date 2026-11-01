@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\ActualizarActividad;
 use App\Http\Middleware\EnsureSuperAdmin;
+use App\Http\Middleware\EnsureTenantActivo;
 use App\Http\Middleware\EnsureTenantUser;
 use App\Http\Middleware\VerificarRol;
 use Illuminate\Foundation\Application;
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant_user' => EnsureTenantUser::class,
             'super_admin' => EnsureSuperAdmin::class,
             'actividad' => ActualizarActividad::class,
+            'tenant_activo' => EnsureTenantActivo::class,
         ]);
 
         // API pura, sin vista de login: evita que un invitado sin Accept:application/json

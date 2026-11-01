@@ -16,15 +16,19 @@ use App\Http\Controllers\Api\ExpedienteController;
 use App\Http\Controllers\Api\MovimientoController;
 use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\PanelController;
+use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\RecuperacionPasswordController;
 use App\Http\Controllers\Api\ReporteFalloController;
 use App\Http\Controllers\Api\SuperAdmin\AuditoriaController;
 use App\Http\Controllers\Api\SuperAdmin\DashboardController;
+use App\Http\Controllers\Api\SuperAdmin\PlanController as SuperAdminPlanController;
 use App\Http\Controllers\Api\SuperAdmin\ReporteController;
 use App\Http\Controllers\Api\SuperAdmin\ReporteFalloController as SuperAdminReporteFalloController;
 use App\Http\Controllers\Api\SuperAdmin\SuperAdminAuthController;
 use App\Http\Controllers\Api\SuperAdmin\SuperAdminController;
+use App\Http\Controllers\Api\SuperAdmin\SuscripcionController as SuperAdminSuscripcionController;
 use App\Http\Controllers\Api\SuperAdmin\UsuarioEnLineaController;
+use App\Http\Controllers\Api\SuscripcionController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\UsuarioController;
 use App\Http\Controllers\Api\VerificacionController;
@@ -63,83 +67,98 @@ Route::prefix('sistema-admin')->group(function () {
         Route::get('reportes-fallos', [SuperAdminReporteFalloController::class, 'index']);
         Route::get('reportes-fallos/{reporteFallo}/captura', [SuperAdminReporteFalloController::class, 'captura']);
         Route::patch('reportes-fallos/{reporteFallo}/resolver', [SuperAdminReporteFalloController::class, 'resolver']);
+
+        Route::get('planes', [SuperAdminPlanController::class, 'index']);
+        Route::post('planes', [SuperAdminPlanController::class, 'store']);
+        Route::put('planes/{plan}', [SuperAdminPlanController::class, 'update']);
+
+        Route::get('tenants/{tenant}/suscripcion', [SuperAdminSuscripcionController::class, 'show']);
+        Route::post('tenants/{tenant}/suscripcion/vencer', [SuperAdminSuscripcionController::class, 'marcarVencida']);
     });
 });
 
 Route::middleware(['auth:sanctum', 'tenant_user', 'actividad'])->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('yo', [AuthController::class, 'yo']);
-    Route::put('perfil', [AuthController::class, 'actualizarDatos']);
-    Route::put('perfil/password', [AuthController::class, 'cambiarPassword']);
-    Route::post('perfil/foto', [AuthController::class, 'foto']);
-    Route::delete('perfil/foto', [AuthController::class, 'quitarFoto']);
 
-    Route::post('verificacion/reenviar', [VerificacionController::class, 'reenviar']);
-    Route::post('verificacion/confirmar', [VerificacionController::class, 'confirmar']);
+    // Fuera del gate de 'tenant_activo' a propósito: con la suscripción vencida, el frontend
+    // todavía necesita poder mostrar el plan actual/catálogo para que el usuario pueda renovar.
+    Route::get('suscripcion', [SuscripcionController::class, 'show']);
+    Route::get('planes', [PlanController::class, 'index']);
 
-    Route::get('panel', PanelController::class);
-    Route::get('catalogos', CatalogoController::class);
-    Route::get('claude-usage', [ClaudeUsoController::class, 'show']);
-    Route::get('almacenamiento-usage', [AlmacenamientoController::class, 'show']);
+    Route::middleware('tenant_activo')->group(function () {
+        Route::put('perfil', [AuthController::class, 'actualizarDatos']);
+        Route::put('perfil/password', [AuthController::class, 'cambiarPassword']);
+        Route::post('perfil/foto', [AuthController::class, 'foto']);
+        Route::delete('perfil/foto', [AuthController::class, 'quitarFoto']);
 
-    Route::get('notificaciones', [NotificacionController::class, 'index']);
-    Route::get('notificaciones/resumen', [NotificacionController::class, 'resumen']);
-    Route::patch('notificaciones/{notificacion}/leer', [NotificacionController::class, 'leer']);
-    Route::post('notificaciones/leer-todas', [NotificacionController::class, 'leerTodas']);
+        Route::post('verificacion/reenviar', [VerificacionController::class, 'reenviar']);
+        Route::post('verificacion/confirmar', [VerificacionController::class, 'confirmar']);
 
-    Route::get('tenant', [TenantController::class, 'show']);
-    Route::get('configuracion', [ConfiguracionController::class, 'show']);
-    Route::middleware('rol:admin')->group(function () {
-        Route::put('tenant', [TenantController::class, 'update']);
-        Route::post('tenant/logo', [TenantController::class, 'logo']);
-        Route::put('configuracion', [ConfiguracionController::class, 'update']);
+        Route::get('panel', PanelController::class);
+        Route::get('catalogos', CatalogoController::class);
+        Route::get('claude-usage', [ClaudeUsoController::class, 'show']);
+        Route::get('almacenamiento-usage', [AlmacenamientoController::class, 'show']);
 
-        Route::post('exportaciones', [ExportacionController::class, 'store']);
-        Route::get('exportaciones/{exportacion}', [ExportacionController::class, 'show']);
-        Route::get('exportaciones/{exportacion}/descargar', [ExportacionController::class, 'descargar']);
-    });
+        Route::get('notificaciones', [NotificacionController::class, 'index']);
+        Route::get('notificaciones/resumen', [NotificacionController::class, 'resumen']);
+        Route::patch('notificaciones/{notificacion}/leer', [NotificacionController::class, 'leer']);
+        Route::post('notificaciones/leer-todas', [NotificacionController::class, 'leerTodas']);
 
-    Route::apiResource('clientes', ClienteController::class)->except('destroy');
-    Route::apiResource('expedientes', ExpedienteController::class)->except('destroy');
-    Route::post('expedientes/{expediente}/movimientos', [MovimientoController::class, 'store']);
-    Route::post('expedientes/{expediente}/documentos', [DocumentoController::class, 'store']);
+        Route::get('tenant', [TenantController::class, 'show']);
+        Route::get('configuracion', [ConfiguracionController::class, 'show']);
+        Route::middleware('rol:admin')->group(function () {
+            Route::put('tenant', [TenantController::class, 'update']);
+            Route::post('tenant/logo', [TenantController::class, 'logo']);
+            Route::put('configuracion', [ConfiguracionController::class, 'update']);
 
-    Route::post('documentos/extraer-previa', [DocumentoIaController::class, 'extraerPrevia']);
-    Route::get('documentos', [DocumentoController::class, 'index']);
-    Route::post('documentos', [DocumentoController::class, 'storeSinExpediente']);
-    Route::get('documentos/{documento}', [DocumentoController::class, 'show']);
-    Route::get('documentos/{documento}/archivo', [DocumentoController::class, 'archivo']);
-    Route::post('documentos/{documento}/resumen', [DocumentoIaController::class, 'resumen']);
-    Route::post('documentos/{documento}/preguntas', [DocumentoIaController::class, 'preguntar']);
-    Route::post('documentos/{documento}/extraccion', [DocumentoIaController::class, 'extraccion']);
-    Route::post('documentos/{documento}/asignar-expediente', [DocumentoController::class, 'asignarExpediente']);
-    Route::put('documentos/{documento}/etiquetas', [DocumentoController::class, 'sincronizarEtiquetas']);
+            Route::post('exportaciones', [ExportacionController::class, 'store']);
+            Route::get('exportaciones/{exportacion}', [ExportacionController::class, 'show']);
+            Route::get('exportaciones/{exportacion}/descargar', [ExportacionController::class, 'descargar']);
+        });
 
-    Route::get('etiquetas', [EtiquetaController::class, 'index']);
-    Route::post('etiquetas', [EtiquetaController::class, 'store']);
-    Route::put('etiquetas/{etiqueta}', [EtiquetaController::class, 'update']);
-    Route::delete('etiquetas/{etiqueta}', [EtiquetaController::class, 'destroy']);
+        Route::apiResource('clientes', ClienteController::class)->except('destroy');
+        Route::apiResource('expedientes', ExpedienteController::class)->except('destroy');
+        Route::post('expedientes/{expediente}/movimientos', [MovimientoController::class, 'store']);
+        Route::post('expedientes/{expediente}/documentos', [DocumentoController::class, 'store']);
 
-    Route::post('reportes-fallos', [ReporteFalloController::class, 'store']);
+        Route::post('documentos/extraer-previa', [DocumentoIaController::class, 'extraerPrevia']);
+        Route::get('documentos', [DocumentoController::class, 'index']);
+        Route::post('documentos', [DocumentoController::class, 'storeSinExpediente']);
+        Route::get('documentos/{documento}', [DocumentoController::class, 'show']);
+        Route::get('documentos/{documento}/archivo', [DocumentoController::class, 'archivo']);
+        Route::post('documentos/{documento}/resumen', [DocumentoIaController::class, 'resumen']);
+        Route::post('documentos/{documento}/preguntas', [DocumentoIaController::class, 'preguntar']);
+        Route::post('documentos/{documento}/extraccion', [DocumentoIaController::class, 'extraccion']);
+        Route::post('documentos/{documento}/asignar-expediente', [DocumentoController::class, 'asignarExpediente']);
+        Route::put('documentos/{documento}/etiquetas', [DocumentoController::class, 'sincronizarEtiquetas']);
 
-    Route::get('integraciones/dniruc/{tipo}/{numero}', [IntegracionController::class, 'dniRuc']);
+        Route::get('etiquetas', [EtiquetaController::class, 'index']);
+        Route::post('etiquetas', [EtiquetaController::class, 'store']);
+        Route::put('etiquetas/{etiqueta}', [EtiquetaController::class, 'update']);
+        Route::delete('etiquetas/{etiqueta}', [EtiquetaController::class, 'destroy']);
 
-    Route::apiResource('eventos', EventoController::class)->except(['show', 'destroy']);
+        Route::post('reportes-fallos', [ReporteFalloController::class, 'store']);
 
-    Route::middleware('rol:admin,abogado')->group(function () {
-        Route::delete('clientes/{cliente}', [ClienteController::class, 'destroy']);
-        Route::delete('expedientes/{expediente}', [ExpedienteController::class, 'destroy']);
-        Route::delete('movimientos/{movimiento}', [MovimientoController::class, 'destroy']);
-        Route::delete('documentos/{documento}', [DocumentoController::class, 'destroy']);
-        Route::delete('eventos/{evento}', [EventoController::class, 'destroy']);
-    });
+        Route::get('integraciones/dniruc/{tipo}/{numero}', [IntegracionController::class, 'dniRuc']);
 
-    Route::middleware('rol:admin')->apiResource('usuarios', UsuarioController::class);
+        Route::apiResource('eventos', EventoController::class)->except(['show', 'destroy']);
 
-    // Disparar manualmente el envío de recordatorios de agenda
-    Route::middleware('rol:admin')->post('recordatorios/enviar', function () {
-        Artisan::call('okd:recordatorios');
+        Route::middleware('rol:admin,abogado')->group(function () {
+            Route::delete('clientes/{cliente}', [ClienteController::class, 'destroy']);
+            Route::delete('expedientes/{expediente}', [ExpedienteController::class, 'destroy']);
+            Route::delete('movimientos/{movimiento}', [MovimientoController::class, 'destroy']);
+            Route::delete('documentos/{documento}', [DocumentoController::class, 'destroy']);
+            Route::delete('eventos/{evento}', [EventoController::class, 'destroy']);
+        });
 
-        return response()->json(['mensaje' => trim(Artisan::output())]);
+        Route::middleware('rol:admin')->apiResource('usuarios', UsuarioController::class);
+
+        // Disparar manualmente el envío de recordatorios de agenda
+        Route::middleware('rol:admin')->post('recordatorios/enviar', function () {
+            Artisan::call('okd:recordatorios');
+
+            return response()->json(['mensaje' => trim(Artisan::output())]);
+        });
     });
 });

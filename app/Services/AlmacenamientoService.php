@@ -19,18 +19,20 @@ class AlmacenamientoService
      */
     public function verificarEspacioPara(Tenant $tenant, int $bytesEntrantes, string $campo): void
     {
-        if ($tenant->limite_almacenamiento_mb === null) {
+        $limiteMb = $this->limiteMb($tenant);
+
+        if ($limiteMb === null) {
             return;
         }
 
-        $limiteBytes = $tenant->limite_almacenamiento_mb * self::BYTES_POR_MB;
+        $limiteBytes = $limiteMb * self::BYTES_POR_MB;
         $usadoBytes = $this->usadoBytes($tenant);
 
         if ($usadoBytes + $bytesEntrantes > $limiteBytes) {
             $restanteMb = max(0, floor(($limiteBytes - $usadoBytes) / self::BYTES_POR_MB));
 
             throw ValidationException::withMessages([
-                $campo => ["No hay espacio de almacenamiento suficiente: quedan {$restanteMb} MB de {$tenant->limite_almacenamiento_mb} MB disponibles."],
+                $campo => ["No hay espacio de almacenamiento suficiente: quedan {$restanteMb} MB de {$limiteMb} MB disponibles."],
             ]);
         }
     }
@@ -41,13 +43,20 @@ class AlmacenamientoService
     public function estado(Tenant $tenant): array
     {
         $usadoMb = round($this->usadoBytes($tenant) / self::BYTES_POR_MB, 2);
-        $limiteMb = $tenant->limite_almacenamiento_mb;
+        $limiteMb = $this->limiteMb($tenant);
 
         return [
             'usado_mb' => $usadoMb,
             'limite_mb' => $limiteMb,
             'restante_mb' => $limiteMb === null ? null : max(0, round($limiteMb - $usadoMb, 2)),
         ];
+    }
+
+    // tenant.limite_almacenamiento_mb es una excepción manual (ej. soporte le abre espacio extra a un
+    // caso puntual); si no está seteada, el límite por defecto viene del plan de la suscripción activa.
+    private function limiteMb(Tenant $tenant): ?int
+    {
+        return $tenant->limite_almacenamiento_mb ?? $tenant->suscripcionActual()?->plan?->limite_almacenamiento_mb;
     }
 
     private function usadoBytes(Tenant $tenant): int

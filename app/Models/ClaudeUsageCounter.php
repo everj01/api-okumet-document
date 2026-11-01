@@ -9,10 +9,10 @@ class ClaudeUsageCounter extends Model
 {
     protected $table = 'claude_usage_counters';
 
-    protected $fillable = ['usuario_id', 'periodo', 'llamadas', 'limite'];
+    protected $fillable = ['tenant_id', 'periodo', 'llamadas', 'limite'];
 
-    public function usuario(): BelongsTo
+    public function tenant(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'usuario_id');
+        return $this->belongsTo(Tenant::class);
     }
 }

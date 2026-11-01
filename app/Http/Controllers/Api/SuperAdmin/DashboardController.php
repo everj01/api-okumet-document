@@ -99,14 +99,13 @@ class DashboardController extends Controller
         // join/groupBy, que son expresiones estructuradas: hay que prefijar estos a mano.
         $prefijo = DB::connection()->getTablePrefix();
 
+        // Una fila por tenant+periodo (pool compartido, ya no por usuario): no hace falta agregar.
         return ClaudeUsageCounter::query()
-            ->join('users', 'users.id', '=', 'claude_usage_counters.usuario_id')
-            ->join('tenants', 'tenants.id', '=', 'users.tenant_id')
+            ->join('tenants', 'tenants.id', '=', 'claude_usage_counters.tenant_id')
             ->where('claude_usage_counters.periodo', now()->format('Y-m'))
-            ->selectRaw("{$prefijo}tenants.nombre_comercial as tenant, SUM({$prefijo}claude_usage_counters.llamadas) as usado, SUM({$prefijo}claude_usage_counters.limite) as limite")
-            ->groupBy('tenants.id', 'tenants.nombre_comercial')
-            ->havingRaw("SUM({$prefijo}claude_usage_counters.llamadas) >= 0.8 * SUM({$prefijo}claude_usage_counters.limite)")
-            ->orderByRaw("SUM({$prefijo}claude_usage_counters.llamadas) / SUM({$prefijo}claude_usage_counters.limite) DESC")
+            ->whereRaw("{$prefijo}claude_usage_counters.llamadas >= 0.8 * {$prefijo}claude_usage_counters.limite")
+            ->selectRaw("{$prefijo}tenants.nombre_comercial as tenant, {$prefijo}claude_usage_counters.llamadas as usado, {$prefijo}claude_usage_counters.limite as limite")
+            ->orderByRaw("{$prefijo}claude_usage_counters.llamadas / {$prefijo}claude_usage_counters.limite DESC")
             ->limit(5)
             ->get()
             ->map(fn ($fila) => [

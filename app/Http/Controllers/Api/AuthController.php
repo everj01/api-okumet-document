@@ -8,7 +8,9 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegistroRequest;
 use App\Http\Resources\UsuarioResource;
 use App\Models\AccesoLog;
+use App\Models\Plan;
 use App\Models\Rol;
+use App\Models\Suscripcion;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\RegistradorAcceso;
@@ -47,6 +49,20 @@ class AuthController extends Controller
             // Asignación directa: BelongsToTenant no puede autoasignarlo sin usuario autenticado en este request.
             $admin->tenant_id = $tenant->id;
             $admin->save();
+
+            // Todo tenant nuevo arranca en el plan Free por 30 días (sin pasarela todavía, el upgrade
+            // a un plan pagado se gestiona a mano hasta que llegue la integración con MercadoPago).
+            $planGratuito = Plan::where('nombre', 'Free')->first();
+
+            if ($planGratuito) {
+                Suscripcion::create([
+                    'tenant_id' => $tenant->id,
+                    'plan_id' => $planGratuito->id,
+                    'estado' => 'activa',
+                    'inicia_en' => now()->toDateString(),
+                    'termina_en' => now()->addDays(30)->toDateString(),
+                ]);
+            }
 
             return $admin;
         });

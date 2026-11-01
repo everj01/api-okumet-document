@@ -16,7 +16,7 @@ class User extends Authenticatable
 {
     use BelongsToTenant, HasApiTokens, HasFactory, HasUuid, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'rol_id', 'telefono', 'dni', 'colegiatura', 'foto_path', 'activo'];
+    protected $fillable = ['name', 'email', 'password', 'rol_id', 'telefono', 'dni', 'colegiatura', 'foto_path', 'activo', 'limite_claude_override'];
 
     protected $hidden = ['password', 'remember_token'];
 
